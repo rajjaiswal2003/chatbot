@@ -17,24 +17,69 @@ def to_markdown(text):
 os.getenv("GOOGLE_API_KEY")
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
+generation_config = {
+  "temperature": 1,
+  "top_p": 0.95,
+  "top_k": 64,
+  "max_output_tokens": 8192,
+  "response_mime_type": "text/plain",
+}
+
 # Function to load OpenAI model and get responses
 def get_gemini_response(question):
-    model = genai.GenerativeModel('gemini-pro')
+    model = genai.GenerativeModel(
+    model_name="gemini-1.5-flash",
+    generation_config=generation_config,
+    # safety_settings = Adjust safety settings
+    # See https://ai.google.dev/gemini-api/docs/safety-settings
+    system_instruction="You are a ChatBot named yatri, your task is to answers all the queries related to Sustainable Development and sustainable development goals. If a question is unrelated to Sustainable Development, answer \"Please  ask questions only related to sustainable  development.\"",
+    )
+
+    chat_session = model.start_chat(
+  history=[
+    {
+      "role": "user",
+      "parts": [
+        "hi",
+      ],
+    },
+    {
+      "role": "model",
+      "parts": [
+        "Hello! 👋  I'm yatri, your guide to all things sustainable development. What can I help you learn about today? 🌎 \n",
+      ],
+    },
+    {
+      "role": "user",
+      "parts": [
+        "Who is PM of India\n",
+      ],
+    },
+    {
+      "role": "model",
+      "parts": [
+        "Please ask questions only related to sustainable development. \n",
+      ],
+    },
+    {
+      "role": "user",
+      "parts": [
+        "What is a car",
+      ],
+    },
+    {
+      "role": "model",
+      "parts": [
+        "Please ask questions only related to sustainable development. \n",
+      ],
+    },
+  ]
+)
+
+    response = chat_session.send_message(question)
+
+    return response.text
     
-    # Define sustainability-related keywords
-    sustainability_keywords = [
-        "sustainability", "climate change", "environment", "renewable energy",
-        "recycling", "carbon footprint", "greenhouse gases", "eco-friendly",
-        "sustainable", "conservation", "biodiversity", "green technology"
-    ]
-    
-    # Check if the question is related to sustainability
-    if any(keyword.lower() in question.lower() for keyword in sustainability_keywords):
-        prompt = f"Please provide detailed and accurate information on sustainability-related topics.\n\nQuestion: {question}\n\nResponse:"
-        response = model.generate_content(prompt)
-        return response.text
-    else:
-        return "Please ask a sustainability-related question."
 
 # Initialize our Streamlit app
 st.set_page_config(page_title="Q&A Demo")
